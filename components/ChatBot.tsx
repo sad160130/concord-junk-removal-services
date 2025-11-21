@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Chat } from "@google/genai";
-import { X, Send, Loader2, User } from 'lucide-react';
+import { X, Send, Loader2, User, AlertCircle } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'model';
@@ -15,6 +15,7 @@ export const ChatBot: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Using the consistent 'David' real photo from About page
@@ -28,7 +29,15 @@ export const ChatBot: React.FC = () => {
   useEffect(() => {
     const initChat = async () => {
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const apiKey = process.env.API_KEY;
+        
+        if (!apiKey) {
+          console.error("API Key is missing in environment variables");
+          setError("Chat is currently unavailable (Configuration Error). Please call us directly.");
+          return;
+        }
+
+        const ai = new GoogleGenAI({ apiKey });
         
         const systemInstruction = `
           You are "David", the Lead Hauler and local expert at "Concord Junk Removal Services".
@@ -69,8 +78,11 @@ export const ChatBot: React.FC = () => {
             temperature: 0.7,
           }
         });
+        
+        setError(null);
       } catch (error) {
         console.error("Failed to initialize AI chat:", error);
+        setError("Unable to connect to chat server.");
       }
     };
 
@@ -80,11 +92,21 @@ export const ChatBot: React.FC = () => {
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isLoading, error]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !chatSessionRef.current) return;
+    if (!input.trim()) return;
+    
+    // If chat isn't initialized (e.g. missing key), show error and don't send
+    if (!chatSessionRef.current) {
+       setMessages(prev => [...prev, { role: 'user', text: input.trim() }]);
+       setInput('');
+       setTimeout(() => {
+         setMessages(prev => [...prev, { role: 'model', text: "I'm sorry, I can't connect right now. Please give us a call at (502) 530-9330!" }]);
+       }, 500);
+       return;
+    }
 
     const userMessage = input.trim();
     setInput('');
@@ -183,6 +205,7 @@ export const ChatBot: React.FC = () => {
                 </div>
               </div>
             ))}
+            
             {isLoading && (
               <div className="flex items-start gap-2">
                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -198,6 +221,17 @@ export const ChatBot: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Error State Display */}
+            {error && (
+              <div className="flex justify-center mt-4">
+                <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2">
+                  <AlertCircle size={14} />
+                  {error}
+                </div>
+              </div>
+            )}
+            
             <div ref={messagesEndRef} />
           </div>
 
@@ -208,11 +242,12 @@ export const ChatBot: React.FC = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Message David..."
-              className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              disabled={!!error}
+              className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
             <button 
               type="submit" 
-              disabled={isLoading || !input.trim()}
+              disabled={isLoading || !input.trim() || !!error}
               className="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={18} />
