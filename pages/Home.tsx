@@ -214,9 +214,10 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
            
            <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
               <div className="md:w-1/2 relative min-h-[300px] group">
+                 {/* UPDATED IMAGE: Shows team/workers moving a sofa - explicit action shot */}
                  <img 
                    src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" 
-                   alt="Concord Junk Removal Team loading furniture"
+                   alt="Concord Junk Removal Team moving furniture safely"
                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                  />
                  <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent pointer-events-none"></div>
