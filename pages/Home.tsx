@@ -202,7 +202,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* 3. Meet Our Team - Static Image */}
+      {/* 3. Meet Our Team - Updated Image */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
            <div className="text-center max-w-3xl mx-auto mb-12">
@@ -215,8 +215,8 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
            <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
               <div className="md:w-1/2 relative min-h-[300px] group">
                  <img 
-                   src="https://images.unsplash.com/photo-1581578731117-104f2a417954?auto=format&fit=crop&w=800&q=80" 
-                   alt="Concord Junk Removal Team workers"
+                   src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" 
+                   alt="Concord Junk Removal Team loading furniture"
                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                  />
                  <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent pointer-events-none"></div>
