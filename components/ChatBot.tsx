@@ -2,9 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Chat } from "@google/genai";
 import { X, Send, Loader2, User, AlertCircle } from 'lucide-react';
 
-// Declare the global constant defined in vite.config.ts
-declare const __GEMINI_API_KEY__: string;
-
 interface Message {
   role: 'user' | 'model';
   text: string;
@@ -20,37 +17,20 @@ export const ChatBot: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Using the consistent 'David' real photo from About page
   const AVATAR_URL = "https://images.unsplash.com/photo-1586449480530-3286c6d3d040?auto=format&fit=crop&w=800&q=80";
   const FALLBACK_AVATAR = "https://ui-avatars.com/api/?name=David&background=166534&color=fff";
   
-  // Ref to store the chat session so it persists across re-renders
   const chatSessionRef = useRef<Chat | null>(null);
 
-  // Initialize Chat Session
   useEffect(() => {
     const initChat = async () => {
       try {
-        // Access the key injected by Vite at build time
-        // We check __GEMINI_API_KEY__ first (preferred), then fallbacks
-        let apiKey = '';
-        
-        try {
-          if (typeof __GEMINI_API_KEY__ !== 'undefined') {
-            apiKey = __GEMINI_API_KEY__;
-          }
-        } catch (e) {
-          // Ignore reference error if variable doesn't exist
-        }
+        // API Key must be obtained exclusively from process.env.API_KEY
+        const apiKey = process.env.API_KEY;
 
-        // Fallback for local dev if define plugin didn't catch it
-        if (!apiKey && typeof process !== 'undefined' && process.env) {
-          apiKey = process.env.API_KEY || '';
-        }
-
-        if (!apiKey || apiKey.trim() === '') {
-          console.error("ChatBot Configuration Error: API Key is missing.");
-          console.error("Ensure 'API_KEY' is set in your Vercel Project Settings (Environment Variables).");
+        // Debug logging to help diagnose environment issues in the browser console
+        if (!apiKey) {
+          console.error("ChatBot Config Error: API Key is missing.");
           setError("Configuration Error");
           return;
         }
@@ -97,7 +77,6 @@ export const ChatBot: React.FC = () => {
           }
         });
         
-        // console.log("ChatBot: Connected successfully.");
         setError(null);
       } catch (error) {
         console.error("ChatBot Error: Failed to initialize AI chat.", error);
@@ -108,7 +87,6 @@ export const ChatBot: React.FC = () => {
     initChat();
   }, []);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading, error]);
@@ -117,13 +95,11 @@ export const ChatBot: React.FC = () => {
     e.preventDefault();
     if (!input.trim()) return;
     
-    // If chat isn't initialized (e.g. missing key), show error and don't send
     if (!chatSessionRef.current) {
        const userMsg = input.trim();
        setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
        setInput('');
        
-       // Small delay to simulate processing before error
        setTimeout(() => {
          setMessages(prev => [...prev, { role: 'model', text: "I'm sorry, I can't connect right now. Please give us a call at (502) 530-9330!" }]);
          if (!error) setError("Chat Disconnected");
@@ -139,7 +115,6 @@ export const ChatBot: React.FC = () => {
     try {
       const result = await chatSessionRef.current.sendMessage({ message: userMessage });
       const responseText = result.text;
-      
       setMessages(prev => [...prev, { role: 'model', text: responseText }]);
     } catch (error) {
       console.error("ChatBot Error: Failed to send message.", error);
@@ -153,9 +128,7 @@ export const ChatBot: React.FC = () => {
     e.currentTarget.src = FALLBACK_AVATAR;
   };
 
-  // Helper to render messages with clickable phone numbers
   const renderMessageContent = (text: string) => {
-    // Regex to match phone numbers like (502) 530-9330 or 502-530-9330
     const phoneRegex = /(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/g;
     const parts = text.split(phoneRegex);
     return parts.map((part, i) => {
@@ -169,11 +142,9 @@ export const ChatBot: React.FC = () => {
 
   return (
     <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end font-sans">
-      {/* Chat Window */}
       {isOpen && (
         <div className="bg-white rounded-2xl shadow-2xl w-[350px] sm:w-[400px] h-[500px] mb-4 flex flex-col border border-gray-200 overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
           
-          {/* Header */}
           <div className="bg-green-600 p-4 text-white flex justify-between items-center shadow-sm">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -198,7 +169,6 @@ export const ChatBot: React.FC = () => {
             </button>
           </div>
 
-          {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
             {messages.map((msg, idx) => (
               <div 
@@ -245,7 +215,6 @@ export const ChatBot: React.FC = () => {
               </div>
             )}
 
-            {/* Error State Display */}
             {error && (
               <div className="flex justify-center mt-4">
                 <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm border border-red-100">
@@ -258,7 +227,6 @@ export const ChatBot: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Area */}
           <form onSubmit={handleSend} className="p-4 bg-white border-t border-gray-100 flex gap-2">
             <input
               type="text"
@@ -279,7 +247,6 @@ export const ChatBot: React.FC = () => {
         </div>
       )}
 
-      {/* Toggle Button - Shows Avatar when closed for human feel */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`relative shadow-xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300 flex items-center justify-center group ${
@@ -299,14 +266,12 @@ export const ChatBot: React.FC = () => {
           />
         )}
         
-        {/* Notification Badge on closed state */}
         {!isOpen && !error && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white animate-bounce">
             1
           </span>
         )}
         
-        {/* Error Badge on closed state */}
         {!isOpen && error && (
           <span className="absolute -top-1 -right-1 bg-gray-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white">
             !
@@ -314,7 +279,6 @@ export const ChatBot: React.FC = () => {
         )}
       </button>
       
-      {/* Tooltip when closed */}
       {!isOpen && (
         <div className="mt-2 mr-2 bg-white px-3 py-1 rounded-lg shadow-md border border-gray-100 text-xs font-bold text-gray-700 animate-in fade-in slide-in-from-bottom-2 duration-700">
           {error ? "Chat Offline" : "Chat with David 👋"}
