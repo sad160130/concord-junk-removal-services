@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Chat } from "@google/genai";
 import { X, Send, Loader2, User, AlertCircle } from 'lucide-react';
 
+// Declare the global constant defined in vite.config.ts
+declare const __GEMINI_API_KEY__: string;
+
 interface Message {
   role: 'user' | 'model';
   text: string;
@@ -28,14 +31,27 @@ export const ChatBot: React.FC = () => {
   useEffect(() => {
     const initChat = async () => {
       try {
-        const apiKey = process.env.API_KEY;
+        // Access the key injected by Vite at build time
+        // We check __GEMINI_API_KEY__ first (preferred), then fallbacks
+        let apiKey = '';
         
-        // Debug log (safe to keep in prod if it doesn't log the actual key value in plain text)
-        console.log("ChatBot: Initializing...");
+        try {
+          if (typeof __GEMINI_API_KEY__ !== 'undefined') {
+            apiKey = __GEMINI_API_KEY__;
+          }
+        } catch (e) {
+          // Ignore reference error if variable doesn't exist
+        }
+
+        // Fallback for local dev if define plugin didn't catch it
+        if (!apiKey && typeof process !== 'undefined' && process.env) {
+          apiKey = process.env.API_KEY || '';
+        }
 
         if (!apiKey || apiKey.trim() === '') {
-          console.error("ChatBot Error: API_KEY is missing or empty.");
-          setError("Chat Unavailable");
+          console.error("ChatBot Configuration Error: API Key is missing.");
+          console.error("Ensure 'API_KEY' is set in your Vercel Project Settings (Environment Variables).");
+          setError("Configuration Error");
           return;
         }
 
@@ -81,7 +97,7 @@ export const ChatBot: React.FC = () => {
           }
         });
         
-        console.log("ChatBot: Connected successfully.");
+        // console.log("ChatBot: Connected successfully.");
         setError(null);
       } catch (error) {
         console.error("ChatBot Error: Failed to initialize AI chat.", error);
@@ -234,7 +250,7 @@ export const ChatBot: React.FC = () => {
               <div className="flex justify-center mt-4">
                 <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm border border-red-100">
                   <AlertCircle size={14} />
-                  {error === "Chat Unavailable" ? "System Offline - Please Call" : error}
+                  {error === "Configuration Error" ? "System Offline - Please Call (502) 530-9330" : error}
                 </div>
               </div>
             )}
