@@ -14,7 +14,8 @@ export default defineConfig(({ mode }) => {
   // Vercel System Env Vars are in process.env, .env files are in env object
   const apiKey = process.env.API_KEY || env.API_KEY || 
                  process.env.VITE_API_KEY || env.VITE_API_KEY || 
-                 process.env.GOOGLE_API_KEY || env.GOOGLE_API_KEY || '';
+                 process.env.GOOGLE_API_KEY || env.GOOGLE_API_KEY || 
+                 process.env.REACT_APP_API_KEY || env.REACT_APP_API_KEY || '';
 
   // Log status during build (useful for Vercel logs)
   if (mode === 'production') {
@@ -32,7 +33,7 @@ export default defineConfig(({ mode }) => {
       // This gets replaced at build time: __GEMINI_API_KEY__ -> "AIzaSy..."
       '__GEMINI_API_KEY__': JSON.stringify(apiKey),
       
-      // Fallback support for standard process.env access
+      // Fallback support for standard process.env access within the bundle
       'process.env.API_KEY': JSON.stringify(apiKey),
     },
     build: {
@@ -40,6 +41,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
+            // Split vendor code to avoid bundle size warnings and improve caching
             vendor: ['react', 'react-dom', '@google/genai', 'lucide-react'],
           },
         },
