@@ -14,16 +14,16 @@ export default defineConfig(({ mode }) => {
     if (apiKey) {
       console.log('✅ API_KEY found in environment for build.');
     } else {
-      console.warn('⚠️ API_KEY is missing in build environment. ChatBot will be offline.');
+      console.warn('⚠️ API_KEY is missing in build environment. Relying on runtime environment variable.');
     }
   }
 
   return {
     plugins: [react()],
     define: {
-      // specific replacement for the API key
-      // Defaults to empty string if not found to prevents "process is not defined" errors in browser
-      'process.env.API_KEY': JSON.stringify(apiKey || ''),
+      // If apiKey exists, inject it as a string. 
+      // If not, leave 'process.env.API_KEY' as code so it evaluates at runtime (window.process.env.API_KEY).
+      'process.env.API_KEY': apiKey ? JSON.stringify(apiKey) : 'process.env.API_KEY',
     },
     build: {
       chunkSizeWarningLimit: 1000,
