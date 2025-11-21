@@ -30,7 +30,7 @@ export const ChatBot: React.FC = () => {
 
         // Debug logging to help diagnose environment issues in the browser console
         if (!apiKey) {
-          console.error("ChatBot Config Error: API Key is missing.");
+          console.error("ChatBot Config Error: API Key is missing from process.env.API_KEY");
           setError("Configuration Error");
           return;
         }
