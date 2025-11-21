@@ -3,24 +3,23 @@ import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Load env file based on `mode` in the current working directory.
-  // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
-  const env = loadEnv(mode, (process as any).cwd(), '');
+  const cwd = (process as any).cwd();
+  const env = loadEnv(mode, cwd, '');
   
+  // CRITICAL FIX: Vercel injects variables into process.env. 
+  // We must prioritize process.env.API_KEY over the loaded .env file variables.
+  const apiKey = process.env.API_KEY || env.API_KEY || '';
+
   return {
     plugins: [react()],
     define: {
-      // This ensures process.env.API_KEY is replaced with the actual string value during build.
-      // We default to '' to prevent 'undefined' replacement which leaves 'process.env.API_KEY' 
-      // in the code, causing "process is not defined" errors in the browser.
-      'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
+      // This replaces process.env.API_KEY in the code with the actual string value
+      'process.env.API_KEY': JSON.stringify(apiKey),
     },
     build: {
-      // Increase the warning limit slightly to reduce noise
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
-          // Split third-party libraries into a separate 'vendor' chunk
           manualChunks: {
             vendor: ['react', 'react-dom', '@google/genai', 'lucide-react'],
           },

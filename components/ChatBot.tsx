@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Chat } from "@google/genai";
 import { X, Send, Loader2, User, AlertCircle } from 'lucide-react';
@@ -31,9 +30,12 @@ export const ChatBot: React.FC = () => {
       try {
         const apiKey = process.env.API_KEY;
         
-        if (!apiKey) {
-          console.error("API Key is missing in environment variables");
-          setError("Chat is currently unavailable (Configuration Error). Please call us directly.");
+        // Debug log (safe to keep in prod if it doesn't log the actual key value in plain text)
+        console.log("ChatBot: Initializing...");
+
+        if (!apiKey || apiKey.trim() === '') {
+          console.error("ChatBot Error: API_KEY is missing or empty.");
+          setError("Chat Unavailable");
           return;
         }
 
@@ -79,10 +81,11 @@ export const ChatBot: React.FC = () => {
           }
         });
         
+        console.log("ChatBot: Connected successfully.");
         setError(null);
       } catch (error) {
-        console.error("Failed to initialize AI chat:", error);
-        setError("Unable to connect to chat server.");
+        console.error("ChatBot Error: Failed to initialize AI chat.", error);
+        setError("Connection Failed");
       }
     };
 
@@ -100,10 +103,14 @@ export const ChatBot: React.FC = () => {
     
     // If chat isn't initialized (e.g. missing key), show error and don't send
     if (!chatSessionRef.current) {
-       setMessages(prev => [...prev, { role: 'user', text: input.trim() }]);
+       const userMsg = input.trim();
+       setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
        setInput('');
+       
+       // Small delay to simulate processing before error
        setTimeout(() => {
          setMessages(prev => [...prev, { role: 'model', text: "I'm sorry, I can't connect right now. Please give us a call at (502) 530-9330!" }]);
+         if (!error) setError("Chat Disconnected");
        }, 500);
        return;
     }
@@ -119,7 +126,7 @@ export const ChatBot: React.FC = () => {
       
       setMessages(prev => [...prev, { role: 'model', text: responseText }]);
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("ChatBot Error: Failed to send message.", error);
       setMessages(prev => [...prev, { role: 'model', text: "I'm having trouble connecting to the server right now. Please call us at (502) 530-9330 for immediate assistance." }]);
     } finally {
       setIsLoading(false);
@@ -145,7 +152,7 @@ export const ChatBot: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end font-sans">
+    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end font-sans">
       {/* Chat Window */}
       {isOpen && (
         <div className="bg-white rounded-2xl shadow-2xl w-[350px] sm:w-[400px] h-[500px] mb-4 flex flex-col border border-gray-200 overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
@@ -160,7 +167,7 @@ export const ChatBot: React.FC = () => {
                    className="w-12 h-12 rounded-full object-cover border-2 border-white bg-green-800"
                    onError={handleImageError}
                  />
-                 <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-green-800 rounded-full animate-pulse"></span>
+                 <span className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-green-800 rounded-full ${error ? 'bg-red-500' : 'bg-green-400 animate-pulse'}`}></span>
               </div>
               <div>
                 <h3 className="font-bold text-base">David</h3>
@@ -225,9 +232,9 @@ export const ChatBot: React.FC = () => {
             {/* Error State Display */}
             {error && (
               <div className="flex justify-center mt-4">
-                <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2">
+                <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm border border-red-100">
                   <AlertCircle size={14} />
-                  {error}
+                  {error === "Chat Unavailable" ? "System Offline - Please Call" : error}
                 </div>
               </div>
             )}
@@ -241,14 +248,14 @@ export const ChatBot: React.FC = () => {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Message David..."
+              placeholder={error ? "Chat unavailable..." : "Message David..."}
               disabled={!!error}
-              className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
             />
             <button 
               type="submit" 
               disabled={isLoading || !input.trim() || !!error}
-              className="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
               <Send size={18} />
             </button>
@@ -271,15 +278,22 @@ export const ChatBot: React.FC = () => {
           <img 
             src={AVATAR_URL} 
             alt="Chat with David" 
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover ${error ? 'grayscale' : ''}`}
             onError={handleImageError}
           />
         )}
         
         {/* Notification Badge on closed state */}
-        {!isOpen && (
+        {!isOpen && !error && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white animate-bounce">
             1
+          </span>
+        )}
+        
+        {/* Error Badge on closed state */}
+        {!isOpen && error && (
+          <span className="absolute -top-1 -right-1 bg-gray-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white">
+            !
           </span>
         )}
       </button>
@@ -287,7 +301,7 @@ export const ChatBot: React.FC = () => {
       {/* Tooltip when closed */}
       {!isOpen && (
         <div className="mt-2 mr-2 bg-white px-3 py-1 rounded-lg shadow-md border border-gray-100 text-xs font-bold text-gray-700 animate-in fade-in slide-in-from-bottom-2 duration-700">
-          Chat with David 👋
+          {error ? "Chat Offline" : "Chat with David 👋"}
         </div>
       )}
     </div>
