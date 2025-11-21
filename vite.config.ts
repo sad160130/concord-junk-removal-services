@@ -15,5 +15,17 @@ export default defineConfig(({ mode }) => {
       // in the code, causing "process is not defined" errors in the browser.
       'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
     },
+    build: {
+      // Increase the warning limit slightly to reduce noise
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          // Split third-party libraries into a separate 'vendor' chunk
+          manualChunks: {
+            vendor: ['react', 'react-dom', '@google/genai', 'lucide-react'],
+          },
+        },
+      },
+    },
   };
 });
