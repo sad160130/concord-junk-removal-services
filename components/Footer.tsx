@@ -62,8 +62,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
         </div>
         
-        <div className="border-t border-gray-800 pt-6 text-center text-gray-500 text-sm">
-          &copy; {new Date().getFullYear()} Concord Junk Removal Services. All rights reserved.
+        <div className="border-t border-gray-800 pt-6 text-gray-500 text-sm flex flex-col md:flex-row justify-between items-center text-center md:text-left gap-4">
+          <div>
+            &copy; {new Date().getFullYear()} Concord Junk Removal Services. All rights reserved.
+          </div>
+          {/* Use relative path 'sitemap.xml' instead of absolute '/sitemap.xml' to support subdirectory hosting */}
+          <a href="sitemap.xml" target="_blank" className="hover:text-green-400 transition-colors flex items-center gap-2">
+            Sitemap
+          </a>
         </div>
       </div>
     </footer>
