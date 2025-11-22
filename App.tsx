@@ -46,16 +46,43 @@ const getPathFromView = (view: ViewState): string => {
 };
 
 const App: React.FC = () => {
-  // Initialize state based on current browser URL path
-  const [currentView, setCurrentView] = useState<ViewState>(() => getViewFromPath(window.location.pathname));
+  // Helper to determine initial view, checking both Path and Legacy Hash
+  const getInitialView = (): ViewState => {
+    const path = window.location.pathname;
+    const hash = window.location.hash;
+
+    // If we have a hash style URL (legacy or cached), prioritize parsing it
+    if (hash && hash.startsWith('#')) {
+       const hashPath = hash.replace('#', '');
+       // Ensure we treat empty hash path as home
+       if (hashPath === '' || hashPath === '/') return ViewState.HOME;
+       return getViewFromPath(hashPath);
+    }
+
+    return getViewFromPath(path);
+  };
+
+  const [currentView, setCurrentView] = useState<ViewState>(getInitialView);
 
   useEffect(() => {
+    // 1. Handle Back/Forward buttons
     const handlePopState = () => {
       setCurrentView(getViewFromPath(window.location.pathname));
     };
-    
-    // Listen for back/forward button clicks
     window.addEventListener('popstate', handlePopState);
+
+    // 2. Handle Hash Migration on Mount
+    // If user lands on /#/about-us, we immediately switch URL to /about-us
+    if (window.location.hash && window.location.hash.startsWith('#')) {
+       const hashPath = window.location.hash.replace('#', '') || '/';
+       const view = getViewFromPath(hashPath);
+       const cleanPath = getPathFromView(view);
+       
+       // Replace the current history entry to remove the hash
+       window.history.replaceState({}, '', cleanPath);
+       setCurrentView(view);
+    }
+
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
