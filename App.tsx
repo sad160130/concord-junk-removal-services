@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigation } from './components/Navigation';
 import { Footer } from './components/Footer';
@@ -32,9 +31,14 @@ const App: React.FC = () => {
 
     // MIGRATION LOGIC: If we detect a routing hash (starts with #/), treat it as the path
     // Example: /#/about-us -> /about-us
-    if (hash && hash.startsWith('#/')) {
-       const hashPath = hash.replace('#', '');
-       return getViewFromPath(hashPath);
+    if (hash) {
+       // Remove # and ensuring leading /
+       const cleanHash = hash.replace(/^#\/?/, '/');
+       const matchedView = getViewFromPath(cleanHash);
+       // Only use hash if it actually matches a route, otherwise fall back to path
+       if (matchedView !== ViewState.HOME || cleanHash === '/') {
+          return matchedView;
+       }
     }
 
     return getViewFromPath(path);
@@ -57,24 +61,29 @@ const App: React.FC = () => {
     // A. Dynamic Canonical Tag Management
     const baseUrl = 'https://concordjunkremovalservices.com';
     const path = ROUTES[currentView];
-    // Normalize to ensure no double slashes, but keep root slash if needed
+    // Ensure path doesn't have trailing slash for consistency, unless it's root
     const normalizedPath = path === '/' ? '' : path;
     const canonicalUrl = `${baseUrl}${normalizedPath}`;
 
+    // Find existing canonical tag or create a new one
     let link = document.querySelector("link[rel='canonical']") as HTMLLinkElement;
     if (!link) {
       link = document.createElement('link');
       link.setAttribute('rel', 'canonical');
       document.head.appendChild(link);
     }
+    // Update the href to the self-referencing URL
     link.setAttribute('href', canonicalUrl);
 
     // B. Aggressive Hash Cleanup
-    // If the user is on a legacy hash URL (e.g., /#/about-us), replace it strictly with the clean URL.
-    if (window.location.hash && window.location.hash.startsWith('#/')) {
-       const hashPath = window.location.hash.replace('#', '') || '/';
-       // Replace the current history entry to remove the hash completely
-       window.history.replaceState(null, '', hashPath);
+    // If URL contains a hash, strip it and replace history state with the Clean URL
+    if (window.location.hash) {
+       const cleanHashPath = window.location.hash.replace(/^#\/?/, '/');
+       // Normalize: ensure we don't end up with double slashes if path was empty
+       const finalPath = cleanHashPath.startsWith('/') ? cleanHashPath : `/${cleanHashPath}`;
+       
+       // Execute replacement without reloading page
+       window.history.replaceState(null, '', finalPath);
     }
   }, [currentView]);
 
