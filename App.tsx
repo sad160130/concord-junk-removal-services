@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigation } from './components/Navigation';
 import { Footer } from './components/Footer';
@@ -11,50 +12,29 @@ import { LancasterPage } from './pages/LancasterPage';
 import { WaxhawPage } from './pages/WaxhawPage';
 import { MarvinPage } from './pages/MarvinPage';
 import { About } from './pages/About';
-import { ViewState } from './types';
+import { ViewState, ROUTES } from './types';
 
-// Helper to determine ViewState from the current URL path
+// Helper to determine ViewState from a URL path
 const getViewFromPath = (path: string): ViewState => {
   // Normalize path by removing trailing slash (unless root)
   const normalizedPath = path.endsWith('/') && path.length > 1 ? path.slice(0, -1) : path;
   
-  switch (normalizedPath) {
-    case '/about-us': return ViewState.ABOUT;
-    case '/appliance-removal': return ViewState.APPLIANCE;
-    case '/furniture-removal': return ViewState.FURNITURE;
-    case '/construction-debris': return ViewState.CONSTRUCTION;
-    case '/waxhaw-junk-removal': return ViewState.WAXHAW;
-    case '/marvin-junk-removal': return ViewState.MARVIN;
-    case '/lancaster-junk-removal': return ViewState.LANCASTER;
-    default: return ViewState.HOME;
-  }
-};
-
-// Helper to get the URL path for a specific ViewState
-const getPathFromView = (view: ViewState): string => {
-  switch (view) {
-    case ViewState.ABOUT: return '/about-us';
-    case ViewState.APPLIANCE: return '/appliance-removal';
-    case ViewState.FURNITURE: return '/furniture-removal';
-    case ViewState.CONSTRUCTION: return '/construction-debris';
-    case ViewState.WAXHAW: return '/waxhaw-junk-removal';
-    case ViewState.MARVIN: return '/marvin-junk-removal';
-    case ViewState.LANCASTER: return '/lancaster-junk-removal';
-    case ViewState.HOME:
-    default: return '/';
-  }
+  // Reverse lookup from ROUTES object
+  const entry = Object.entries(ROUTES).find(([_, rPath]) => rPath === normalizedPath);
+  return entry ? (entry[0] as ViewState) : ViewState.HOME;
 };
 
 const App: React.FC = () => {
-  // Helper to determine initial view, checking both Path and Legacy Hash
+  // Helper to determine initial view, aggressively checking for hash to migrate it
   const getInitialView = (): ViewState => {
     const path = window.location.pathname;
     const hash = window.location.hash;
 
-    // If we have a hash style URL (legacy or cached), prioritize parsing it
+    // MIGRATION LOGIC: If we detect a hash (e.g. /#/about-us), use it to set state
+    // This supports users clicking old links or bookmarks
     if (hash && hash.startsWith('#')) {
        const hashPath = hash.replace('#', '');
-       // Ensure we treat empty hash path as home
+       // Handle root hash case
        if (hashPath === '' || hashPath === '/') return ViewState.HOME;
        return getViewFromPath(hashPath);
     }
@@ -65,21 +45,21 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>(getInitialView);
 
   useEffect(() => {
-    // 1. Handle Back/Forward buttons
+    // 1. Handle Back/Forward buttons (History API)
     const handlePopState = () => {
       setCurrentView(getViewFromPath(window.location.pathname));
     };
     window.addEventListener('popstate', handlePopState);
 
-    // 2. Handle Hash Migration on Mount
-    // If user lands on /#/about-us, we immediately switch URL to /about-us
-    if (window.location.hash && window.location.hash.startsWith('#')) {
+    // 2. AGGRESSIVE HASH CLEANUP
+    // If the URL contains a hash, immediately replace the history state with the clean path
+    if (window.location.hash) {
        const hashPath = window.location.hash.replace('#', '') || '/';
        const view = getViewFromPath(hashPath);
-       const cleanPath = getPathFromView(view);
+       const cleanPath = ROUTES[view];
        
-       // Replace the current history entry to remove the hash
-       window.history.replaceState({}, '', cleanPath);
+       // Replace the current history entry to remove the hash strictly
+       window.history.replaceState(null, '', cleanPath);
        setCurrentView(view);
     }
 
@@ -87,9 +67,9 @@ const App: React.FC = () => {
   }, []);
 
   const handleNavigate = (view: ViewState) => {
-    const newPath = getPathFromView(view);
-    // Push new state to history to update URL without reload
-    window.history.pushState({}, '', newPath);
+    const newPath = ROUTES[view];
+    // Standard HTML5 History Push
+    window.history.pushState(null, '', newPath);
     setCurrentView(view);
     window.scrollTo(0, 0);
   };
@@ -127,7 +107,6 @@ const App: React.FC = () => {
 
       <Footer onNavigate={handleNavigate} />
       
-      {/* Interactive Chat Bot Overlay */}
       <ChatBot />
     </div>
   );

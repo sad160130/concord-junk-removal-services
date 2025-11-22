@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { ViewState } from '../types';
+import { ViewState, ROUTES } from '../types';
 import { Menu, X, PhoneCall, Truck } from 'lucide-react';
 
 interface NavigationProps {
@@ -18,7 +19,8 @@ export const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate 
     { label: 'Construction Debris', view: ViewState.CONSTRUCTION },
   ];
 
-  const handleNavClick = (view: ViewState) => {
+  const handleNavClick = (e: React.MouseEvent, view: ViewState) => {
+    e.preventDefault(); // Prevent default anchor link behavior (page reload)
     onNavigate(view);
     setIsMobileMenuOpen(false);
     window.scrollTo(0, 0);
@@ -33,25 +35,27 @@ export const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate 
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-20">
           {/* Logo Area */}
-          <button 
-            onClick={() => handleNavClick(ViewState.HOME)}
-            className="flex items-center gap-2 text-blue-900 hover:opacity-80 transition"
+          <a 
+            href={ROUTES[ViewState.HOME]}
+            onClick={(e) => handleNavClick(e, ViewState.HOME)}
+            className="flex items-center gap-2 text-blue-900 hover:opacity-80 transition group"
           >
-            <div className="bg-blue-900 text-white p-2 rounded-lg">
+            <div className="bg-blue-900 text-white p-2 rounded-lg group-hover:bg-blue-800 transition">
               <Truck size={24} />
             </div>
             <div className="text-left leading-none">
               <div className="font-extrabold text-xl tracking-tight">CONCORD</div>
               <div className="font-semibold text-xs text-green-600 tracking-widest">JUNK REMOVAL SERVICES</div>
             </div>
-          </button>
+          </a>
 
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center gap-8">
             {navItems.map(item => (
-              <button
+              <a
                 key={item.view}
-                onClick={() => handleNavClick(item.view)}
+                href={ROUTES[item.view]}
+                onClick={(e) => handleNavClick(e, item.view)}
                 className={`text-sm font-bold transition-colors ${
                   currentView === item.view 
                     ? 'text-green-600' 
@@ -59,7 +63,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate 
                 }`}
               >
                 {item.label}
-              </button>
+              </a>
             ))}
             <a 
               href="tel:5025309330"
@@ -84,15 +88,16 @@ export const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate 
         <div className="lg:hidden bg-white border-t border-gray-100 absolute w-full shadow-xl">
           <div className="flex flex-col p-4 space-y-4">
             {navItems.map(item => (
-              <button
+              <a
                 key={item.view}
-                onClick={() => handleNavClick(item.view)}
+                href={ROUTES[item.view]}
+                onClick={(e) => handleNavClick(e, item.view)}
                 className={`text-left text-lg font-medium py-2 ${
                   currentView === item.view ? 'text-green-600' : 'text-gray-800'
                 }`}
               >
                 {item.label}
-              </button>
+              </a>
             ))}
             <a 
               href="tel:5025309330"

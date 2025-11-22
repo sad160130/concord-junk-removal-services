@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { ViewState } from '../types';
+import { ViewState, ROUTES } from '../types';
 import { Phone, MapPin, Mail, Facebook, Instagram } from 'lucide-react';
 
 interface FooterProps {
@@ -7,6 +8,12 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
+  const handleLinkClick = (e: React.MouseEvent, view: ViewState) => {
+    e.preventDefault();
+    onNavigate(view);
+    window.scrollTo(0, 0);
+  };
+
   return (
     <footer className="bg-gray-900 text-white pt-12 pb-6">
       <div className="container mx-auto px-4">
@@ -26,19 +33,19 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <h4 className="text-lg font-semibold mb-4">Services</h4>
             <ul className="space-y-2 text-gray-400">
               <li>
-                <button onClick={() => onNavigate(ViewState.ABOUT)} className="hover:text-green-400 transition">About Us</button>
+                <a href={ROUTES[ViewState.ABOUT]} onClick={(e) => handleLinkClick(e, ViewState.ABOUT)} className="hover:text-green-400 transition">About Us</a>
               </li>
               <li>
-                <button onClick={() => onNavigate(ViewState.APPLIANCE)} className="hover:text-green-400 transition">Appliance Removal</button>
+                <a href={ROUTES[ViewState.APPLIANCE]} onClick={(e) => handleLinkClick(e, ViewState.APPLIANCE)} className="hover:text-green-400 transition">Appliance Removal</a>
               </li>
               <li>
-                <button onClick={() => onNavigate(ViewState.FURNITURE)} className="hover:text-green-400 transition">Furniture Removal</button>
+                <a href={ROUTES[ViewState.FURNITURE]} onClick={(e) => handleLinkClick(e, ViewState.FURNITURE)} className="hover:text-green-400 transition">Furniture Removal</a>
               </li>
               <li>
-                <button onClick={() => onNavigate(ViewState.CONSTRUCTION)} className="hover:text-green-400 transition">Construction Debris</button>
+                <a href={ROUTES[ViewState.CONSTRUCTION]} onClick={(e) => handleLinkClick(e, ViewState.CONSTRUCTION)} className="hover:text-green-400 transition">Construction Debris</a>
               </li>
               <li>
-                <button onClick={() => onNavigate(ViewState.HOME)} className="hover:text-green-400 transition">Full Property Cleanouts</button>
+                <a href={ROUTES[ViewState.HOME]} onClick={(e) => handleLinkClick(e, ViewState.HOME)} className="hover:text-green-400 transition">Full Property Cleanouts</a>
               </li>
             </ul>
           </div>

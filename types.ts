@@ -1,3 +1,4 @@
+
 export enum ViewState {
   HOME = 'HOME',
   APPLIANCE = 'APPLIANCE',
@@ -20,3 +21,15 @@ export const SERVICES: ServiceOption[] = [
   { id: 'Construction Debris Removal', label: 'Construction Debris Removal' },
   { id: 'General Junk Removal', label: 'General Junk Removal' },
 ];
+
+// Centralized routing configuration for Clean URLs
+export const ROUTES: Record<ViewState, string> = {
+  [ViewState.HOME]: '/',
+  [ViewState.ABOUT]: '/about-us',
+  [ViewState.APPLIANCE]: '/appliance-removal',
+  [ViewState.FURNITURE]: '/furniture-removal',
+  [ViewState.CONSTRUCTION]: '/construction-debris',
+  [ViewState.WAXHAW]: '/waxhaw-junk-removal',
+  [ViewState.MARVIN]: '/marvin-junk-removal',
+  [ViewState.LANCASTER]: '/lancaster-junk-removal',
+};
