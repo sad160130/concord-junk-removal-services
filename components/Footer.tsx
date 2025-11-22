@@ -66,8 +66,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div>
             &copy; {new Date().getFullYear()} Concord Junk Removal Services. All rights reserved.
           </div>
-          {/* Use relative path 'sitemap.xml' instead of absolute '/sitemap.xml' to support subdirectory hosting */}
-          <a href="sitemap.xml" target="_blank" className="hover:text-green-400 transition-colors flex items-center gap-2">
+          <a href="/sitemap.xml" target="_blank" className="hover:text-green-400 transition-colors flex items-center gap-2">
             Sitemap
           </a>
         </div>
