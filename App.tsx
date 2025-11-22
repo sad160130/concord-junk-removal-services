@@ -25,17 +25,15 @@ const getViewFromPath = (path: string): ViewState => {
 };
 
 const App: React.FC = () => {
-  // Helper to determine initial view, aggressively checking for hash to migrate it
+  // Helper to determine initial view, explicitly handling legacy hash routing
   const getInitialView = (): ViewState => {
     const path = window.location.pathname;
     const hash = window.location.hash;
 
-    // MIGRATION LOGIC: If we detect a hash (e.g. /#/about-us), use it to set state
-    // This supports users clicking old links or bookmarks
-    if (hash && hash.startsWith('#')) {
+    // MIGRATION LOGIC: If we detect a routing hash (starts with #/), treat it as the path
+    // Example: /#/about-us -> /about-us
+    if (hash && hash.startsWith('#/')) {
        const hashPath = hash.replace('#', '');
-       // Handle root hash case
-       if (hashPath === '' || hashPath === '/') return ViewState.HOME;
        return getViewFromPath(hashPath);
     }
 
@@ -51,20 +49,34 @@ const App: React.FC = () => {
     };
     window.addEventListener('popstate', handlePopState);
 
-    // 2. AGGRESSIVE HASH CLEANUP
-    // If the URL contains a hash, immediately replace the history state with the clean path
-    if (window.location.hash) {
-       const hashPath = window.location.hash.replace('#', '') || '/';
-       const view = getViewFromPath(hashPath);
-       const cleanPath = ROUTES[view];
-       
-       // Replace the current history entry to remove the hash strictly
-       window.history.replaceState(null, '', cleanPath);
-       setCurrentView(view);
-    }
-
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  // Combined Effect for Canonical Tags and Hash Cleanup
+  useEffect(() => {
+    // A. Dynamic Canonical Tag Management
+    const baseUrl = 'https://concordjunkremovalservices.com';
+    const path = ROUTES[currentView];
+    // Normalize to ensure no double slashes, but keep root slash if needed
+    const normalizedPath = path === '/' ? '' : path;
+    const canonicalUrl = `${baseUrl}${normalizedPath}`;
+
+    let link = document.querySelector("link[rel='canonical']") as HTMLLinkElement;
+    if (!link) {
+      link = document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      document.head.appendChild(link);
+    }
+    link.setAttribute('href', canonicalUrl);
+
+    // B. Aggressive Hash Cleanup
+    // If the user is on a legacy hash URL (e.g., /#/about-us), replace it strictly with the clean URL.
+    if (window.location.hash && window.location.hash.startsWith('#/')) {
+       const hashPath = window.location.hash.replace('#', '') || '/';
+       // Replace the current history entry to remove the hash completely
+       window.history.replaceState(null, '', hashPath);
+    }
+  }, [currentView]);
 
   const handleNavigate = (view: ViewState) => {
     const newPath = ROUTES[view];
